@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moja Poroka</title>
+    <title>Prepoznavanje Črte</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -11,53 +11,100 @@
             background-color: #f8f8f8;
             color: #333;
             padding: 20px;
+            overflow: hidden;
+            position: relative;
         }
-        #countdown {
-            font-size: 24px;
-            margin-bottom: 20px;
+
+        #video {
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto;
         }
-        #start-camera {
-            display: inline-block;
-            padding: 10px;
-            background-color: #405de6; /* Instagram modra */
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
+
+        #captured-photo {
+            width: 100%;
+            max-width: 640px;
+            margin: 20px auto;
         }
     </style>
 </head>
 <body>
-    <h1>Dobrodošli na Naši Poročni Spletni Strani</h1>
-    <p id="countdown">Čas do začetka poroke: <span id="countdown-timer"></span></p>
-    <button id="start-camera" onclick="startCamera()">Začni Snemanje</button>
+    <h1>Prepoznavanje Tanke Črte</h1>
+    <video id="video" playsinline></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <img id="captured-photo" style="display: none;" alt="Captured Photo">
+
+    <script src="https://cdn.jsdelivr.net/tracking.js/1.1.3/tracking-min.js"></script>
+    <script src="https://cdn.jsdelivr.net/tracking.js/1.1.3/data/eye.js"></script>
+    <script src="https://cdn.jsdelivr.net/tracking.js/1.1.3/data/mouth.js"></script>
+    <script src="https://cdn.jsdelivr.net/tracking.js/1.1.3/data/face.js"></script>
 
     <script>
-        // Dodaj kodo za odštevalnik in dostop do kamere tukaj
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const capturedPhoto = document.getElementById('captured-photo');
+        let isLineDetected = false;
 
-        // Primer odštevalnika
-        const weddingDate = new Date("2024-08-16T15:00:00").getTime();
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function (stream) {
+                video.srcObject = stream;
 
-        function updateCountdown() {
-            const now = new Date().getTime();
-            const distance = weddingDate - now;
+                video.addEventListener('loadeddata', function () {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                });
 
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                // Zaženi sledenje barv v sliki
+                startTracking();
+            })
+            .catch(function (error) {
+                console.error("Napaka pri dostopu do kamere:", error);
+                alert("Napaka pri dostopu do kamere. Preverite, ali imate kamero dovoljeno in poskusite znova.");
+            });
 
-            document.getElementById("countdown-timer").innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+        function startTracking() {
+            tracking.ColorTracker.registerColor('white', function (r, g, b) {
+                // Prilagodite vrednosti glede na barvo, ki jo želite slediti
+                return r > 200 && g > 200 && b > 200;
+            });
+
+            const tracker = new tracking.ColorTracker(['white']);
+
+            tracker.on('track', function (event) {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (event.data.length === 0) {
+                    isLineDetected = false;
+                } else {
+                    event.data.forEach(function (rect) {
+                        context.strokeStyle = rect.color;
+                        context.lineWidth = 2;
+                        context.strokeRect(rect.x, rect.y, rect.width, rect.height);
+
+                        if (!isLineDetected) {
+                            // Ko je črta prvič zaznana, zajemite fotografijo
+                            capturePhoto();
+                            isLineDetected = true;
+                        }
+                    });
+                }
+            });
+
+            tracking.track('#video', tracker, { camera: true });
         }
 
-        // Posodobi odštevalnik vsako sekundo
-        setInterval(updateCountdown, 1000);
+        function capturePhoto() {
+            // Nastavite velikost platna na velikost videa
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
 
-        // Funkcija za začetek snemanja kamere
-        function startCamera() {
-            // Dodaj kodo za dostop do kamere tukaj
-            alert("Dostop do kamere je zdaj omogočen!");
+            // Kopirajte sliko iz videa na platno
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Nastavite izvor fotografije
+            capturedPhoto.src = canvas.toDataURL('image/png');
+            capturedPhoto.style.display = 'block';
         }
     </script>
 </body>
