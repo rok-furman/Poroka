@@ -1,64 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moja Poroka</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-            background-color: #f8f8f8;
-            color: #333;
-            padding: 20px;
-        }
-        #countdown {
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        #start-camera {
-            display: inline-block;
-            padding: 10px;
-            background-color: #405de6; /* Instagram modra */
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-    </style>
+	<title>Spletna stran z vgrajeno kamero in učinki</title>
+	<style>
+		#video {
+			width: 640px;
+			height: 480px;
+			background-color: black;
+		}
+		#canvas {
+			display: none;
+		}
+	</style>
 </head>
 <body>
-    <h1>Dobrodošli na Naši Poročni Spletni Strani</h1>
-    <p id="countdown">Čas do začetka poroke: <span id="countdown-timer"></span></p>
-    <button id="start-camera" onclick="startCamera()">Začni Snemanje</button>
+	<h1>Spletna stran z vgrajeno kamero in učinki</h1>
+	<video id="video"></video>
+	<canvas id="canvas"></canvas>
+	<script>
+		const video = document.getElementById('video');
+		const canvas = document.getElementById('canvas');
+		const context = canvas.getContext('2d');
 
-    <script>
-        // Dodaj kodo za odštevalnik in dostop do kamere tukaj
+		navigator.mediaDevices.getUserMedia({ video: true })
+			.then((stream) => {
+				video.srcObject = stream;
+				video.play();
+			});
 
-        // Primer odštevalnika
-        const weddingDate = new Date("2024-08-16T15:00:00").getTime();
-
-        function updateCountdown() {
-            const now = new Date().getTime();
-            const distance = weddingDate - now;
-
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            document.getElementById("countdown-timer").innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-        }
-
-        // Posodobi odštevalnik vsako sekundo
-        setInterval(updateCountdown, 1000);
-
-        // Funkcija za začetek snemanja kamere
-        function startCamera() {
-            // Dodaj kodo za dostop do kamere tukaj
-            alert("Dostop do kamere je zdaj omogočen!");
-        }
-    </script>
+		video.addEventListener('play', () => {
+			setInterval(() => {
+				context.drawImage(video, 0, 0, 640, 480);
+				const pixels = context.getImageData(0, 0, 640, 480);
+				for (let i = 0; i < pixels.data.length; i += 4) {
+					pixels.data[i + 0] = pixels.data[i + 0] + 100; // red
+					pixels.data[i + 1] = pixels.data[i + 1] - 50; // green
+					pixels.data[i + 2] = pixels.data[i + 2] * 0.5; // blue
+				}
+				context.putImageData(pixels, 0, 0);
+			}, 16);
+		});
+	</script>
 </body>
 </html>
