@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Najina poroka</title>
+	<title>Spletna stran z vgrajeno kamero in učinki</title>
 	<style>
 		#video {
 			width: 640px;
