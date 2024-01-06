@@ -1,111 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prepoznavanje Črte</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-            background-color: #f8f8f8;
-            color: #333;
-            padding: 20px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        #video {
-            width: 100%;
-            max-width: 640px;
-            margin: 0 auto;
-        }
-
-        #captured-photo {
-            width: 100%;
-            max-width: 640px;
-            margin: 20px auto;
-        }
-    </style>
+	<title>Najina poroka</title>
+	<style>
+		#video {
+			width: 640px;
+			height: 480px;
+			background-color: black;
+		}
+		#canvas {
+			display: none;
+		}
+	</style>
 </head>
 <body>
-    <h1>Prepoznavanje Tanke Črte</h1>
-    <video id="video" playsinline></video>
-    <canvas id="canvas" style="display: none;"></canvas>
-    <img id="captured-photo" style="display: none;" alt="Captured Photo">
+	<h1>Spletna stran z vgrajeno kamero in učinki</h1>
+	<video id="video"></video>
+	<canvas id="canvas"></canvas>
+	<script>
+		const video = document.getElementById('video');
+		const canvas = document.getElementById('canvas');
+		const context = canvas.getContext('2d');
 
-    <script src="https://cdn.jsdelivr.net/tracking.js/1.1.3/tracking-min.js"></script>
-    <script src="https://cdn.jsdelivr.net/tracking.js/1.1.3/data/eye.js"></script>
-    <script src="https://cdn.jsdelivr.net/tracking.js/1.1.3/data/mouth.js"></script>
-    <script src="https://cdn.jsdelivr.net/tracking.js/1.1.3/data/face.js"></script>
+		navigator.mediaDevices.getUserMedia({ video: true })
+			.then((stream) => {
+				video.srcObject = stream;
+				video.play();
+			});
 
-    <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const context = canvas.getContext('2d');
-        const capturedPhoto = document.getElementById('captured-photo');
-        let isLineDetected = false;
-
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function (stream) {
-                video.srcObject = stream;
-
-                video.addEventListener('loadeddata', function () {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                });
-
-                // Zaženi sledenje barv v sliki
-                startTracking();
-            })
-            .catch(function (error) {
-                console.error("Napaka pri dostopu do kamere:", error);
-                alert("Napaka pri dostopu do kamere. Preverite, ali imate kamero dovoljeno in poskusite znova.");
-            });
-
-        function startTracking() {
-            tracking.ColorTracker.registerColor('white', function (r, g, b) {
-                // Prilagodite vrednosti glede na barvo, ki jo želite slediti
-                return r > 200 && g > 200 && b > 200;
-            });
-
-            const tracker = new tracking.ColorTracker(['white']);
-
-            tracker.on('track', function (event) {
-                context.clearRect(0, 0, canvas.width, canvas.height);
-
-                if (event.data.length === 0) {
-                    isLineDetected = false;
-                } else {
-                    event.data.forEach(function (rect) {
-                        context.strokeStyle = rect.color;
-                        context.lineWidth = 2;
-                        context.strokeRect(rect.x, rect.y, rect.width, rect.height);
-
-                        if (!isLineDetected) {
-                            // Ko je črta prvič zaznana, zajemite fotografijo
-                            capturePhoto();
-                            isLineDetected = true;
-                        }
-                    });
-                }
-            });
-
-            tracking.track('#video', tracker, { camera: true });
-        }
-
-        function capturePhoto() {
-            // Nastavite velikost platna na velikost videa
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-
-            // Kopirajte sliko iz videa na platno
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Nastavite izvor fotografije
-            capturedPhoto.src = canvas.toDataURL('image/png');
-            capturedPhoto.style.display = 'block';
-        }
-    </script>
+		video.addEventListener('play', () => {
+			setInterval(() => {
+				context.drawImage(video, 0, 0, 640, 480);
+				const pixels = context.getImageData(0, 0, 640, 480);
+				for (let i = 0; i < pixels.data.length; i += 4) {
+					pixels.data[i + 0] = pixels.data[i + 0] + 100; // red
+					pixels.data[i + 1] = pixels.data[i + 1] - 50; // green
+					pixels.data[i + 2] = pixels.data[i + 2] * 0.5; // blue
+				}
+				context.putImageData(pixels, 0, 0);
+			}, 16);
+		});
+	</script>
 </body>
 </html>
