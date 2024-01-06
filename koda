@@ -3,82 +3,136 @@
 <head>
 	<title>Spletna stran z vgrajeno kamero in učinki</title>
 	<style>
-		#video {
-			width: 640px;
-			height: 480px;
-			background-color: black;
+		body {
+			margin: 0;
+			padding: 0;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			height: 100vh;
+			background-color: #000;
 		}
+
+		#video {
+			width: 100%;
+			height: auto;
+			background-color: #000;
+			transform: scaleX(-1);
+		}
+
 		#canvas {
 			display: none;
+		}
+
+		#controls {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-content: center;
+			margin-top: 10px;
+		}
+
+		.control {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			margin: 0 10px;
+			color: #fff;
+			font-size: 14px;
+			cursor: pointer;
+		}
+
+		.control:hover {
+			color: #00ff00;
+		}
+
+		.control img {
+			width: 30px;
+			height: 30px;
+			margin-bottom: 5px;
+		}
+
+		#filters {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-content: center;
+			margin-top: 10px;
+		}
+
+		.filter {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			margin: 0 10px;
+			color: #fff;
+			font-size: 14px;
+			cursor: pointer;
+		}
+
+		.filter:hover {
+			color: #00ff00;
+		}
+
+		.filter img {
+			width: 30px;
+			height: 30px;
+			margin-bottom: 5px;
+		}
+
+		.filter span {
+			margin-top: 5px;
 		}
 	</style>
 </head>
 <body>
-	<h1>Spletna stran z vgrajeno kamero in učinki</h1>
 	<video id="video"></video>
 	<canvas id="canvas"></canvas>
-	<button id="capture">Zajemi sliko</button>
-	<select id="filters">
-		<option value="none">Brez filtra</option>
-		<option value="grayscale">Sivinski filtri</option>
-		<option value="sepia">Sepia filtri</option>
-		<option value="invert">Inverzni filtri</option>
-	</select>
+	<div id="controls">
+		<div class="control" id="mute">
+			<img src="https://i.imgur.com/7J9zvXO.png" alt="Mute">
+			<span>Mute</span>
+		</div>
+		<div class="control" id="record">
+			<img src="https://i.imgur.com/4LsKJgj.png" alt="Record">
+			<span>Record</span>
+		</div>
+		<div class="control" id="switch">
+			<img src="https://i.imgur.com/5VJfVvB.png" alt="Switch">
+			<span>Switch</span>
+		</div>
+	</div>
+	<div id="filters">
+		<div class="filter" id="original">
+			<img src="https://i.imgur.com/6JQjGJy.png" alt="Original">
+			<span>Original</span>
+		</div>
+		<div class="filter" id="grayscale">
+			<img src="https://i.imgur.com/8j2Zk5u.png" alt="Grayscale">
+			<span>Grayscale</span>
+		</div>
+		<div class="filter" id="sepia">
+			<img src="https://i.imgur.com/5QJW8lT.png" alt="Sepia">
+			<span>Sepia</span>
+		</div>
+		<div class="filter" id="invert">
+			<img src="https://i.imgur.com/4LsKJgj.png" alt="Invert">
+			<span>Invert</span>
+		</div>
+	</div>
 	<script>
 		const video = document.getElementById('video');
 		const canvas = document.getElementById('canvas');
 		const context = canvas.getContext('2d');
-		const captureButton = document.getElementById('capture');
-		const filters = document.getElementById('filters');
+		const muteButton = document.getElementById('mute');
+		const recordButton = document.getElementById('record');
+		const switchButton = document.getElementById('switch');
+		const originalFilter = document.getElementById('original');
+		const grayscaleFilter = document.getElementById('grayscale');
+		const sepiaFilter = document.getElementById('sepia');
+		const invertFilter = document.getElementById('invert');
 
-		navigator.mediaDevices.getUserMedia({ video: true })
-			.then((stream) => {
-				video.srcObject = stream;
-				video.play();
-			});
-
-		video.addEventListener('play', () => {
-			setInterval(() => {
-				context.drawImage(video, 0, 0, 640, 480);
-				const pixels = context.getImageData(0, 0, 640, 480);
-				const filter = filters.value;
-				if (filter === 'grayscale') {
-					for (let i = 0; i < pixels.data.length; i += 4) {
-						const gray = pixels.data[i] * 0.3 + pixels.data[i + 1] * 0.59 + pixels.data[i + 2] * 0.11;
-						pixels.data[i + 0] = gray;
-						pixels.data[i + 1] = gray;
-						pixels.data[i + 2] = gray;
-					}
-				} else if (filter === 'sepia') {
-					for (let i = 0; i < pixels.data.length; i += 4) {
-						const r = pixels.data[i];
-						const g = pixels.data[i + 1];
-						const b = pixels.data[i + 2];
-						pixels.data[i + 0] = (r * 0.393) + (g * 0.769) + (b * 0.189);
-						pixels.data[i + 1] = (r * 0.349) + (g * 0.686) + (b * 0.168);
-						pixels.data[i + 2] = (r * 0.272) + (g * 0.534) + (b * 0.131);
-					}
-				} else if (filter === 'invert') {
-					for (let i = 0; i < pixels.data.length; i += 4) {
-						pixels.data[i + 0] = 255 - pixels.data[i + 0];
-						pixels.data[i + 1] = 255 - pixels.data[i + 1];
-						pixels.data[i + 2] = 255 - pixels.data[i + 2];
-					}
-				}
-				context.putImageData(pixels, 0, 0);
-			}, 16);
-		});
-
-		captureButton.addEventListener('click', () => {
-			canvas.toBlob((blob) => {
-				const url = URL.createObjectURL(blob);
-				const link = document.createElement('a');
-				link.href = url;
-				link.download = 'slika.png';
-				link.click();
-				URL.revokeObjectURL(url);
-			});
-		});
-	</script>
-</body>
-</html>
+		n
